@@ -18,7 +18,7 @@ class PaymentChecker() extends Actor{
 
 
   val balance: Long = context.system.settings.config.getLong("akka.actor.balance")
-  val logger = context.actorOf(LogIncorrectPayment.props())
+  val logger: ActorRef = context.actorOf(LogIncorrectPayment.props())
 
   override def receive: Receive = {
     case CheckPayment(mask(name1, name2, value)) =>

@@ -21,13 +21,13 @@ class PaymentParticipant(name: String, var balance: Long) extends Actor with Act
       participant ! StopPayment(value)
     case Payment(MinusSign, value, participant) =>
       balance -= value
-      log.info(s"Transfer user $participant from $name: $value. Balance: $balance.")
+      log.info(s"Transfer from $name: $value. Balance: $balance.")
     case Payment(PlusSign, value, participant) =>
       balance += value
-      log.info(s"Transfer user $name from $participant: $value. Balance: $balance.")
+      log.info(s"Transfer to $name: $value. Balance: $balance.")
     case StopPayment(value) =>
       balance -= value
-      log.info(s"Canceling a transfer to a user ${sender()} from $name: $value. Balance: $balance.")
+      log.info(s"Canceling a transfer to $name: $value. Balance: $balance.")
   }
 
 }
