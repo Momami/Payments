@@ -2,7 +2,6 @@ package com.payment_typed
 
 import akka.actor.typed.scaladsl.{AbstractBehavior, ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
-import org.slf4j.{Logger, LoggerFactory}
 
 object PaymentParticipant {
 

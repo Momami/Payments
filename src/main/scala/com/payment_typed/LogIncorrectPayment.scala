@@ -4,7 +4,6 @@ import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.AbstractBehavior
 import akka.actor.typed.scaladsl.ActorContext
 import akka.actor.typed.scaladsl.Behaviors
-import org.slf4j.{Logger, LoggerFactory}
 
 object LogIncorrectPayment {
 

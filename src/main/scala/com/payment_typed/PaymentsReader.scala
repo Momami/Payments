@@ -18,7 +18,6 @@ class PaymentsReader(paymentChecker: ActorRef[PaymentChecker.CheckPayment],
                      mask: Regex)
                     (implicit val materializer: Materializer) {
 
-  //implicit val materialize = Materializer()
   val fs: FileSystem = FileSystems.getDefault
 
   def readPayments(): Future[Done] =
@@ -27,6 +26,5 @@ class PaymentsReader(paymentChecker: ActorRef[PaymentChecker.CheckPayment],
       .flatMapConcat(FileIO.fromPath(_))
       .via(Framing.delimiter(ByteString("\r\n"), maximumFrameLength = 1024))
       .map(_.utf8String)
-      //.runForeach(println)
       .runForeach(pay => paymentChecker ! PaymentChecker.CheckPayment(pay))
 }
