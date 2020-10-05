@@ -2,6 +2,7 @@ package com.payment_typed
 
 import akka.actor.typed.scaladsl.{AbstractBehavior, ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
+import org.slf4j.{Logger, LoggerFactory}
 
 object PaymentParticipant {
 
@@ -23,28 +24,29 @@ object PaymentParticipant {
 
 class PaymentParticipant(context: ActorContext[PaymentParticipant.PaymentCommand],
                          name: String,
-                         balance: Long)
+                         var balance: Long)
   extends AbstractBehavior[PaymentParticipant.PaymentCommand](context) {
 
   import PaymentParticipant._
 
   override def onMessage(msg: PaymentParticipant.PaymentCommand): Behavior[PaymentParticipant.PaymentCommand] = {
-    Behaviors.receive { (context, message) =>
-      message match {
-        case Payment(MinusSign, value, participant) if value > balance =>
-          context.log.error(s"User lacks balance $name! Rolling back an operation.")
-          participant ! StopPayment(value)
-        case Payment(MinusSign, value, _) =>
-          balance -= value
-          context.log.info(s"Transfer from $name: $value. Balance: $balance.")
-        case Payment(PlusSign, value, _) =>
-          balance += value
-          context.log.info(s"Transfer to $name: $value. Balance: $balance.")
-        case StopPayment(value) =>
-          balance -= value
-          context.log.info(s"Canceling a transfer to $name: $value. Balance: $balance.")
-      }
-      Behaviors.same
+    msg match {
+      case Payment(MinusSign, value, participant) if value > balance =>
+        context.log.error(s"User lacks balance $name! Rolling back an operation.")
+        participant ! StopPayment(value)
+        Behaviors.same
+      case Payment(MinusSign, value, _) =>
+        balance -= value
+        context.log.info(s"Transfer from $name: $value. Balance: $balance.")
+        Behaviors.same
+      case Payment(PlusSign, value, _) =>
+        balance += value
+        context.log.info(s"Transfer to $name: $value. Balance: $balance.")
+        Behaviors.same
+      case StopPayment(value) =>
+        balance -= value
+        context.log.info(s"Canceling a transfer to $name: $value. Balance: $balance.")
+        Behaviors.same
     }
   }
 }

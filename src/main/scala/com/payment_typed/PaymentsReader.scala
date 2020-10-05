@@ -7,6 +7,7 @@ import akka.actor.typed.ActorRef
 import akka.stream.Materializer
 import akka.stream.alpakka.file.scaladsl.Directory
 import akka.stream.scaladsl.{FileIO, Framing}
+import akka.stream.typed.scaladsl.ActorSource
 import akka.util.ByteString
 
 import scala.concurrent.Future
@@ -17,6 +18,7 @@ class PaymentsReader(paymentChecker: ActorRef[PaymentChecker.CheckPayment],
                      mask: Regex)
                     (implicit val materializer: Materializer) {
 
+  //implicit val materialize = Materializer()
   val fs: FileSystem = FileSystems.getDefault
 
   def readPayments(): Future[Done] =
@@ -25,5 +27,6 @@ class PaymentsReader(paymentChecker: ActorRef[PaymentChecker.CheckPayment],
       .flatMapConcat(FileIO.fromPath(_))
       .via(Framing.delimiter(ByteString("\r\n"), maximumFrameLength = 1024))
       .map(_.utf8String)
+      //.runForeach(println)
       .runForeach(pay => paymentChecker ! PaymentChecker.CheckPayment(pay))
 }

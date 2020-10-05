@@ -42,6 +42,7 @@ class PaymentChecker(context: ActorContext[PaymentChecker.CheckPayment])
     }
   }
 
-  protected def createPaymentParticipant(name: String): ActorRef[PaymentParticipant.PaymentCommand] =
+  protected def createPaymentParticipant(name: String): ActorRef[PaymentParticipant.PaymentCommand] = {
     context.spawn(PaymentParticipant(name, balance), s"paymentParticipant_$name")
+  }
 }
