@@ -26,8 +26,6 @@ class PaymentsReader(paymentChecker: ActorRef,
       .flatMapConcat(FileIO.fromPath(_))
       .via(Framing.delimiter(ByteString("\r\n"), maximumFrameLength = 1024))
       .map(_.utf8String)
-      .runForeach(pay => paymentChecker ! PaymentChecker.CheckPayment(pay)).andThen {
-        case _ =>
-      }
+      .runForeach(pay => paymentChecker ! PaymentChecker.CheckPayment(pay))
 }
 
