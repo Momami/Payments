@@ -21,6 +21,7 @@ class MainClass(context: ActorContext[String]) extends AbstractBehavior[String](
         val directory = context.system.settings.config.getString("akka.reading.catalog")
         val mask = context.system.settings.config.getString("akka.reading.mask")
         val paymentsReader = new PaymentsReader(paymentChecker, directory, mask.r)(Materializer.matFromSystem(context.system.classicSystem))
+        Thread.sleep(2000)
         paymentsReader.readPayments().andThen{
           case _ => context.system.terminate()
         }
