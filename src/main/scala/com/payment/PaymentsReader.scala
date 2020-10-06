@@ -8,7 +8,6 @@ import akka.stream.Materializer
 import akka.stream.alpakka.file.scaladsl.Directory
 import akka.stream.scaladsl.{FileIO, Framing, Sink}
 import akka.util.ByteString
-import com.payment.Main.system.dispatcher
 
 import scala.concurrent.Future
 import scala.util.matching.Regex
@@ -26,6 +25,6 @@ class PaymentsReader(paymentChecker: ActorRef,
       .flatMapConcat(FileIO.fromPath(_))
       .via(Framing.delimiter(ByteString("\r\n"), maximumFrameLength = 1024))
       .map(_.utf8String)
-      .runForeach(pay => paymentChecker ! PaymentChecker.CheckPayment(pay))
+      .runWith(Sink.foreach(pay => paymentChecker ! PaymentChecker.CheckPayment(pay)))
 }
 
