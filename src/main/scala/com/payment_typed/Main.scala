@@ -8,28 +8,23 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object MainClass {
   def apply(): Behavior[String] =
-    Behaviors.setup(context => new MainClass(context))
-
-}
-
-class MainClass(context: ActorContext[String]) extends AbstractBehavior[String](context) {
-
-  override def onMessage(msg: String): Behavior[String] =
-    msg match {
-      case "start" =>
-        val paymentChecker = context.spawn(PaymentChecker(), "payment-checker")
-        val directory = context.system.settings.config.getString("akka.reading.catalog")
-        val mask = context.system.settings.config.getString("akka.reading.mask")
-        val paymentsReader =
-          new PaymentsReader(paymentChecker, directory, mask.r)(Materializer.matFromSystem(context.system.classicSystem))
-        paymentsReader.readPayments().andThen{
-          case _ => context.system.terminate()
-        }
-        this
+    Behaviors.setup { context =>
+      Behaviors.receiveMessage {
+        case "start" =>
+          val paymentChecker = context.spawn(PaymentChecker(), "payment-checker")
+          val directory = context.system.settings.config.getString("akka.reading.catalog")
+          val mask = context.system.settings.config.getString("akka.reading.mask")
+          val paymentsReader =
+            new PaymentsReader(paymentChecker, directory, mask.r)(Materializer.matFromSystem(context.system.classicSystem))
+          paymentsReader.readPayments().andThen {
+            case _ => context.system.terminate()
+          }
+          Behaviors.same
+      }
     }
 }
 
-object Main extends App{
-  val mySystem = ActorSystem(MainClass(), "testSystem")
+object Main extends App {
+  val mySystem = ActorSystem(MainClass(), "PaymentsSystem")
   mySystem ! "start"
 }
