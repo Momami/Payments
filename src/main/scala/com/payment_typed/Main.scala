@@ -20,8 +20,8 @@ class MainClass(context: ActorContext[String]) extends AbstractBehavior[String](
         val paymentChecker = context.spawn(PaymentChecker(), "payment-checker")
         val directory = context.system.settings.config.getString("akka.reading.catalog")
         val mask = context.system.settings.config.getString("akka.reading.mask")
-        val paymentsReader = new PaymentsReader(paymentChecker, directory, mask.r)(Materializer.matFromSystem(context.system.classicSystem))
-        Thread.sleep(2000)
+        val paymentsReader =
+          new PaymentsReader(paymentChecker, directory, mask.r)(Materializer.matFromSystem(context.system.classicSystem))
         paymentsReader.readPayments().andThen{
           case _ => context.system.terminate()
         }
@@ -30,6 +30,6 @@ class MainClass(context: ActorContext[String]) extends AbstractBehavior[String](
 }
 
 object Main extends App{
-  val testSystem = ActorSystem(MainClass(), "testSystem")
-  testSystem ! "start"
+  val mySystem = ActorSystem(MainClass(), "testSystem")
+  mySystem ! "start"
 }
