@@ -14,7 +14,9 @@ import scala.util.matching.Regex
 
 class PaymentsReader(paymentChecker: ActorRef,
                      directory: String,
-                     mask: Regex)
+                     mask: Regex,
+                     delimiter: String,
+                     maximumFrameLength: Int)
                     (implicit val materializer: Materializer) {
 
   val fs: FileSystem = FileSystems.getDefault
@@ -23,7 +25,7 @@ class PaymentsReader(paymentChecker: ActorRef,
     Directory.ls(fs.getPath(directory))
       .filter(path => mask.pattern.matcher(path.getFileName.toString).matches())
       .flatMapConcat(FileIO.fromPath(_))
-      .via(Framing.delimiter(ByteString("\r\n"), maximumFrameLength = 1024))
+      .via(Framing.delimiter(ByteString(delimiter), maximumFrameLength = maximumFrameLength))
       .map(_.utf8String)
       .runWith(Sink.foreach(pay => paymentChecker ! PaymentChecker.CheckPayment(pay)))
 }

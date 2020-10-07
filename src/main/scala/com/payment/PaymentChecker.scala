@@ -1,23 +1,21 @@
 package com.payment
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 
 import scala.util.matching.Regex
 
 object PaymentChecker {
-  case class CheckPayment(payment: String)
+  sealed trait CheckOperation
+  case class CheckPayment(payment: String) extends CheckOperation
 
   def props(): Props = Props(new PaymentChecker())
 }
 
-class PaymentChecker() extends Actor{
+class PaymentChecker() extends Actor with ActorLogging {
   import PaymentChecker._
 
-  val numChar = "[\\wа-яА-Я]+"
-  val mask: Regex = s"($numChar) -> ($numChar): (\\d+)".r
-
-
-  val balance: Long = context.system.settings.config.getLong("akka.actor.balance")
+  val mask: Regex = context.system.settings.config.getString("akka.actor.checker.mask").r
+  val balance: Long = context.system.settings.config.getLong("akka.actor.participant.balance")
   val logger: ActorRef = context.actorOf(LogIncorrectPayment.props())
 
   override def receive: Receive = {
@@ -27,6 +25,7 @@ class PaymentChecker() extends Actor{
       participant1 ! PaymentParticipant.Payment(PaymentParticipant.MinusSign, value.toLong, participant2)
       participant2 ! PaymentParticipant.Payment(PaymentParticipant.PlusSign, value.toLong, participant1)
     case CheckPayment(payment) => logger ! LogIncorrectPayment.Message(s"Incorrect transfer: $payment.")
+    case msg @ _ => log.warning(s"Unrecognized message: $msg")
   }
 
   protected def createPaymentParticipant(name: String): ActorRef =

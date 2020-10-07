@@ -8,7 +8,9 @@ object Main extends App{
   val paymentChecker = system.actorOf(PaymentChecker.props())
   val directory = system.settings.config.getString("akka.reading.catalog")
   val mask = system.settings.config.getString("akka.reading.mask")
-  val paymentsReader = new PaymentsReader(paymentChecker, directory, mask.r)
+  val delimiter = system.settings.config.getString("akka.reading.delimiter")
+  val maximumFrameLength = system.settings.config.getInt("akka.reading.maximumFrameLength")
+  val paymentsReader = new PaymentsReader(paymentChecker, directory, mask.r, delimiter, maximumFrameLength)
   paymentsReader.readPayments().andThen{
     case _ => system.terminate()
   }
