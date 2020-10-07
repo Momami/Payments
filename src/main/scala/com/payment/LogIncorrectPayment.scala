@@ -1,4 +1,4 @@
-package com.payment_typed
+package com.payment
 
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors

@@ -1,4 +1,4 @@
-package com.payment_typed
+package com.payment
 
 import java.nio.file.{FileSystem, FileSystems}
 
