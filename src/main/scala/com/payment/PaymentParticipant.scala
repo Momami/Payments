@@ -22,8 +22,8 @@ object PaymentParticipant {
   }
 
   def paymentProcess(name: String, balance: Long): Behavior[PaymentCommand] =
-    Behaviors.setup { context =>
-      Behaviors.receiveMessage {
+    Behaviors.receive { (context, message) =>
+      message match {
         case Payment(MinusSign, value, participant) if value > balance =>
           context.log.error(s"User lacks balance $name! Rolling back an operation.")
           participant ! StopPayment(value)
@@ -39,5 +39,6 @@ object PaymentParticipant {
           context.log.info(s"Canceling a transfer to $name: $value. Balance: ${balance - value}.")
           Behaviors.stopped
       }
+
     }
 }
