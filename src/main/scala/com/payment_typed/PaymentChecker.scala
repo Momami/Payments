@@ -7,14 +7,14 @@ import akka.actor.typed.scaladsl.Behaviors
 import scala.util.matching.Regex
 
 object PaymentChecker {
-  case class CheckPayment(payment: String)
+  sealed trait CheckOperation
+  case class CheckPayment(payment: String) extends CheckOperation
 
-  def apply(): Behavior[CheckPayment] =
+  def apply(): Behavior[CheckOperation] =
     Behaviors.setup { context =>
 
-      val numChar = "[\\wа-яА-Я]+"
-      val mask: Regex = s"($numChar) -> ($numChar): (\\d+)".r
-      val balance: Long = context.system.settings.config.getLong("akka.actor.balance")
+      val mask: Regex = context.system.settings.config.getString("akka.actor.checker.mask").r
+      val balance: Long = context.system.settings.config.getLong("akka.actor.participant.balance")
       val logger: ActorRef[LogIncorrectPayment.Message] = context.spawn(LogIncorrectPayment(), "logger")
 
       def createPaymentParticipant(name: String): ActorRef[PaymentParticipant.PaymentCommand] =

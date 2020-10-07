@@ -1,15 +1,15 @@
 package com.payment_typed
 
-import akka.actor.typed.scaladsl.{AbstractBehavior, ActorContext, Behaviors}
+import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 
 object PaymentParticipant {
 
-  trait PaymentCommand
+  sealed trait PaymentCommand
   case class Payment(sign: PaymentSign, value: Long, participant: ActorRef[PaymentCommand]) extends PaymentCommand
   case class StopPayment(value: Long) extends PaymentCommand
 
-  trait PaymentSign
+  sealed trait PaymentSign
   final case object PlusSign extends PaymentSign
   final case object MinusSign extends PaymentSign
 
@@ -20,7 +20,7 @@ object PaymentParticipant {
         case Payment(MinusSign, value, participant) if value > balanceUser =>
           context.log.error(s"User lacks balance $name! Rolling back an operation.")
           participant ! StopPayment(value)
-          Behaviors.stopped
+          Behaviors.same
         case Payment(MinusSign, value, _) =>
           balanceUser -= value
           context.log.info(s"Transfer from $name: $value. Balance: $balanceUser.")

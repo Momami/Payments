@@ -4,10 +4,10 @@ import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
 
 object LogIncorrectPayment {
+  sealed trait LogMessage
+  case class Message(message: String) extends LogMessage
 
-  case class Message(message: String)
-
-  def apply(): Behavior[Message] =
+  def apply(): Behavior[LogMessage] =
     Behaviors.receive { (context, message) =>
       message match {
         case Message(message) =>
