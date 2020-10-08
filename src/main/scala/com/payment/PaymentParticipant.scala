@@ -29,16 +29,16 @@ object PaymentParticipant {
           context.log.error(s"User lacks balance $name! Rolling back an operation.")
           participant ! StopPayment(value)
           Behaviors.stopped
-        case Payment(MinusSign, value, _) =>
+        case Payment(MinusSign, value, _) if value <= balance =>
           context.log.info(s"Transfer from $name: $value. Balance: ${balance - value}.")
-          Behaviors.stopped
+          Behaviors.same
         case Payment(PlusSign, value, _) =>
           val balanceUser = balance + value
           context.log.info(s"Transfer to $name: $value. Balance: $balanceUser.")
           paymentProcess(name, balanceUser)
         case StopPayment(value) =>
           context.log.info(s"Canceling a transfer to $name: $value. Balance: ${balance - value}.")
-          Behaviors.stopped
+          Behaviors.same
       }
 
     }
