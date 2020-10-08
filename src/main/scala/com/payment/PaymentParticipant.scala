@@ -1,35 +1,45 @@
 package com.payment
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+
+import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.{ActorRef, Behavior}
 
 object PaymentParticipant {
-  sealed trait Operation
-  case class Payment(sign: PaymentSign, value: Long, participant: ActorRef) extends Operation
+
+  sealed trait PaymentCommand
+
+  case class Payment(sign: PaymentSign, value: Long, participant: ActorRef[PaymentCommand]) extends PaymentCommand
+
+  case class StopPayment(value: Long) extends PaymentCommand
+
   sealed trait PaymentSign
-  case object PlusSign extends PaymentSign
-  case object MinusSign extends PaymentSign
-  case class StopPayment(value: Long)
 
-  def props(name: String, balance: Long): Props = Props(new PaymentParticipant(name, balance))
-}
+  final case object PlusSign extends PaymentSign
 
-class PaymentParticipant(name: String, var balance: Long) extends Actor with ActorLogging{
-  import PaymentParticipant._
+  final case object MinusSign extends PaymentSign
 
-  override def receive: Receive = {
-    case Payment(MinusSign, value, participant) if value > balance =>
-      log.error(s"User lacks balance $name! Rolling back an operation.")
-      participant ! StopPayment(value)
-    case Payment(MinusSign, value, _) =>
-      balance -= value
-      log.info(s"Transfer from $name: $value. Balance: $balance.")
-    case Payment(PlusSign, value, _) =>
-      balance += value
-      log.info(s"Transfer to $name: $value. Balance: $balance.")
-    case StopPayment(value) =>
-      balance -= value
-      log.info(s"Canceling a transfer to $name: $value. Balance: $balance.")
-    case msg @ _ => log.warning(s"Unrecognized message: $msg")
+  def apply(name: String, balance: Long): Behavior[PaymentCommand] = {
+    paymentProcess(name, balance)
   }
 
+  def paymentProcess(name: String, balance: Long): Behavior[PaymentCommand] =
+    Behaviors.receive { (context, message) =>
+      message match {
+        case Payment(MinusSign, value, participant) if value > balance =>
+          context.log.error(s"User lacks balance $name! Rolling back an operation.")
+          participant ! StopPayment(value)
+          Behaviors.stopped
+        case Payment(MinusSign, value, _) =>
+          context.log.info(s"Transfer from $name: $value. Balance: ${balance - value}.")
+          Behaviors.stopped
+        case Payment(PlusSign, value, _) =>
+          val balanceUser = balance + value
+          context.log.info(s"Transfer to $name: $value. Balance: $balanceUser.")
+          paymentProcess(name, balanceUser)
+        case StopPayment(value) =>
+          context.log.info(s"Canceling a transfer to $name: $value. Balance: ${balance - value}.")
+          Behaviors.stopped
+      }
+
+    }
 }
